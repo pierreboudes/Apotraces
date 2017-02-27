@@ -1,0 +1,169 @@
+* Traces
+
+Les traces sont extraites de la table =RESULTAT_VET= d'Apogée, qui
+contient les résultats des étudiants aux /étapes/ de diplômes. Une
+étape correspond en général à une année d'inscription. Une étape est
+représentée par un code alphanumérique à 4-6 caractères comme G5PRLS
+ou G5PLS. Une table =ETAPE= décrit les étapes.
+
+La requête est la suivante :
+#+BEGIN_SRC sql
+select '(' || COD_IND ||', "'|| COD_ETP ||'", ' || COD_VRS_VET || ', ' || COD_ANU || ', ' || COD_SES || '),' from resultat_vet where COD_ADM = 1;
+
+…
+(<id_etudiant>, "G5PRLS", 316, 2016, 1)
+(<id_etudiant>, "G5PRLS", 316, 2016, 2)
+…
+
+710897 lignes selectionnees.
+#+END_SRC
+
+On a filtré pour ne retenir que des résultats d'admission (=code_ADM =
+1=), autrement nous aurions aussi des résultats d'admissibilité.
+
+La colonne =COD_VERS_VET= contient un numéro de version dans l'étape.
+Elle n'est pas utilisée par la suite. La dernière colonne dit s'il
+s'agit d'un résultat du premier semestre, du second semestre ou
+d'aucun semestre en particulier (0).
+
+** Simplification par niveau
+
+Première simplification : on ne regarde par si le résultat est bon ou
+pas, on se contente de noter qu'un individu a suivi une étape jusqu'à
+une épreuve d'admission.
+
+Ces lignes sont ensuite organisées par individu en séquences
+temporelles selon l'ordre des années et des semestres.
+
+** Simplification par oubli du passé
+
+On ne retient que les individus dont les traces commencent à partir
+de 2007.
+
+
+** Simplification des étapes multiples dans une année
+
+Vient une simplification drastique : pour chaque année, on ne retient
+qu'un seul code d'étape représentatif (en prenant le dernier de la
+liste dans l'année). Une trace est alors une séquence de codes étapes,
+un par année d'inscription. On perd ainsi les traces de doubles
+inscriptions. Mais il est possible que l'alternance des années le
+fasse réapparaître de façon curieuse : prenons un étudiants qui suit
+L1DATA L2DATA L3DATA et en parallèle L1PHILO L2PHILO L3PHILO, on
+pourra ici produire une trace L1PHILO-L2DATA-L3PHILO.
+
+** Regroupement par traces identiques et anoymisation
+Enfin on regroupe les individus par traces identiques.
+
+Le résultat ne respecte pas le k-anonymat, au sens où de nombreuses
+traces concernent moins de 4 ou 5 individus. Ces traces sont d'autant
+plus nombreuses que certaines étapes ont légèrement changé de nom dans
+le temps (par exemple, G5PLS remplacé par G5PRLS).
+
+
+#+BEGIN_SRC sh
+> P0:apotraces$ grep G5PRLS output.txt
+V1IN-V2IN-G3INF-G4INF-G5PRLS 1
+A3CIW-G4INFO-G5PRLS 1
+G1INF-G2INF-G3INF-G4INF-G5PRLS 1
+V1IN-V2IN-G5PRLS 1
+G3SPI-G4INFO-G5PRLS 1
+G1TRC-G1INF-G2INF-G2INF-G3INF-G4INFO-G5PRLS 1
+G1TRC-G2SPI-G2SPI-G1INF-G2INF-G3INF-G4INFO-G5PRLS 1
+G1TRC-G1TRC-G1INF-G2INF-G3INF-G4INF-G5PRLS 1
+G3INF-G4INF-G4INF-G5PRLS-G5PRLS 1
+G2INF-G2INF-G3INF-G3INF-G4INF-G5PLS-G5PRLS 1
+G1TRC-G1PC-G2INF-G3INF-G4INF-G5PRLS 1
+G1TRC-G1INF-G2INF-G3INF-G4INF-G5PRLS 1
+V1EI-V2EI-G2INF-G3INF-G4INF-G5PRLS 1
+G3INF-G4INFO-G4INFO-G5PRLS 1
+G1INF-G1INF-G1INF-G2INF-G3INF-G4INFO-G5PRLS 1
+G4INF-G5PRLS-G8IN-G8IN 1
+G4INF-G4INF-G5PLS-G5PRLS 1
+G1INF-G2INF-G3INF-G3SI-G4INFO-G5PRLS 1
+G3SI-G3SI-G4INFO-G5PRLS 1
+V1IDA-V2IDA-V2IDB-G3INF-G4INF-G5PRLS 1
+G3INF-G4INF-G4INF-G5PLS-G5PRLS 1
+G1SPI-G2SPI-G3ST-G4ST-G5ST-G5PRLS 1
+G1TRC-G1TRC-G2INF-G2INF-G2INF-G3INF-G3INF-G4INFO-G4INFO-G5PRLS 1
+G4INFO-G4INFO-G5PRLS 1
+G3INF-G4INF-G4INFO-G5PRLS 1
+G3INF-G3INF-G4INF-G4INF-G5PRLS-G5PRLS 1
+G4IR-G5PRLS 1
+G3INF-G3INF-G4INF-G5PLS-G5PRLS 1
+G4INF-G5PRLS 1
+G4INF-G4INF-G5ITC-G5PLS-G5PLS-G5PRLS 1
+G2INF-G2INF-G3INF-G4INF-G4INF-G5PRLS 1
+S1IM-S2IM-G3SPI-G4IR-G5PRLS 1
+G1INF-G2INF-G1INF-G2INF-G3INF-G4INFO-G5PRLS 1
+V1RT-V1RT-V2RT-G2INF-G3INF-G4INFO-G5PRLS 1
+G4INF-G4INF-G4INF-G5PRLS 1
+G1INF-G2INF-G3INF-G4INF-G4INFO-G5PRLS 1
+V1IN-V1IN-V2IN-G3INF-G4INFO-G5PRLS 1
+G4INF-G4INF-G5PRLS-G5PRLS 1
+V1IN-V1IDB-V2IDB-G3INF-G4INFO-G5PRLS 1
+G1TRC-G2INF-G2INF-G3INF-G3INF-G4INFO-G5PRLS 1
+G3INF-G4INF-G4INF-G5PRLS 1
+G3INF-G5PRLS 1
+G1MAT-G2INF-G3INF-G4INFO-G5PRLS 1
+G1INF-G2INF-G3INF-G4INFO-G4INFO-G5PRLS 1
+G4INF-G4INF-G5PRLS 1
+G1INF-G2INF-G3INF-G3INF-G4INFO-G5PRLS 1
+G1INF-G2INF-G2INF-G3INF-G4INFO-G5PRLS 1
+G1PI-G2PI-G2INF-G2INF-G3INF-G4INF-G5PRLS 1
+G1TRC-G1TRC-G2INF-G2INF-G3INF-G4INF-G5PRLS 2
+V1IN-V2IN-G3INF-G4INFO-G5PRLS 2
+G3INF-G4INF-G5PRLS 2
+G2INF-G3INF-G4INFO-G5PRLS 2
+V1IN-V2IN-V2IDB-G3INF-G4INFO-G5PRLS 2
+G3INF-G4INF-G5PLS-G5PRLS 2
+G3INF-G3INF-G4INFO-G5PRLS 2
+G4INF-G4INFO-G5PRLS 3
+G3INF-G4INFO-G5PRLS 3
+G1INF-G2INF-G3INF-G4INFO-G5PRLS 5
+G1INF-G1INF-G2INF-G3INF-G4INFO-G5PRLS 8
+G4INFO-G5PRLS 12
+G5PRLS 15
+
+P0:apotraces$ grep G5PLS output.txt
+B1SVI8-B1SVI8-G1TRC-G2INF-G3INF-G4INF-G5PLS 1
+G4INF-G4INF-G5PLS-G5PLS 1
+G4INF-G4INF-G4INF-G5PLS 1
+G5SIM-G5PLS-G8SEI-G8SEI-G8SEI-G8SEI 1
+A3AG-G4INF-G5PLS 1
+G4IR-G5RIM-G5PLS 1
+G1TRC-G2INF-G2INF-G3INF-G4INF-G5PLS 1
+G2INF-G2INF-G3INF-G3INF-G4INF-G5PLS-G5PRLS 1
+G1TRC-G2MAT-G3MAT-G3MAT-G4INF-G5PLS 1
+V1IN-V2IN-V3SI-G4INF-G5PLS 1
+G3INF-G3INF-G4INF-G5PLS-G5PLS 1
+G4INF-G4INF-G5PLS-G5PRLS 1
+G3INA-G4INF-G5PLS-G5PLS 1
+G3INF-G4INF-G4INF-G5PLS-G5PRLS 1
+LUFE-G4INF-G5PLS 1
+G3INF-G3INF-G4INF-G5PLS-G5PRLS 1
+G3INA-G4INF-G5PLS 1
+G4INF-G4INF-G5ITC-G5PLS-G5PLS-G5PRLS 1
+V3SI-G4INF-G4INF-G5PLS 1
+G3INF-G4IR-G5PLS 1
+V3SI-G4INF-G5PLS 1
+G1TRC-G5PLS 1
+V1IN-V2IN-G3INF-G4INF-G5PLS 1
+A3CIW-G4INF-G5PLS 1
+G4IR-G5PLS 1
+G1CP-G2INF-G3SI-G4SI-G5SI-G5PLS-G8IN-G8IN-G8IN 1
+G2INF-G3INF-G4INF-G5PLS 2
+G3INF-G4INF-G5PLS 2
+G5PLS-G5PLS 2
+G3INF-G4INF-G5PLS-G5PRLS 2
+G5PLS-G8IN-G8IN-G8IN-G8IN 2
+G1TRC-G1TRC-G2INF-G3INF-G4INF-G5PLS 3
+G4INF-G5PLS-G5PLS 3
+G3INF-G3INF-G4INF-G5PLS 4
+G4INF-G4INF-G5PLS 5
+G1TRC-G2INF-G3INF-G4INF-G5PLS 9
+G4INF-G5PLS 13
+G5PLS 23
+#+END_SRC
+
+Pour achever l'anonymisation,
