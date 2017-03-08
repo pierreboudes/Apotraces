@@ -2,11 +2,11 @@ package org.toto.helloworld
 
 import data.Apo
 import data.Etp
+import java.io._
 
 object Main extends App {
 
 //  Apo.traces.foreach(x => println(x._1.mkString("-") + " " + x._2))
-
 
   val traces1 = Apo.traces.filter(_._2 > 4)
 
@@ -29,6 +29,14 @@ object Main extends App {
   traces3.foreach(x => println(x._1.mkString("-") + " " + x._2))
  traces4.foreach(x => println(x._1.mkString("-") + " " + x._2)) */
 
+  //  écriture des traces
+  val file = new File("TRACES.txt")
+  val bw = new BufferedWriter(new FileWriter(file))
+  traces1.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces2.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces3.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces4.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  bw.close
 
   println("traces détaillées : " + traces1.map(_._2).sum)
   println("traces ébauchées : " + traces2.map(_._2).sum)
