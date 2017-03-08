@@ -60,6 +60,16 @@ traces concernent moins de 4 ou 5 individus. Ces traces sont d'autant
 plus nombreuses que certaines étapes ont légèrement changé de nom dans
 le temps (par exemple, G5PLS remplacé par G5PRLS).
 
+#+BEGIN_SRC txt
+G5PRLS; 2; M; Master2 Ind Programmation et Logiciels Surs; Master2Ind PLS
+G5PLS; 2; M; Master2 Programmation et Logiciels surs; Master2 Prog Log Surs
+G5EID; 2; M; Master2 INFO-EID; Master2 INFO-EID
+G5EID3; 2; M; Master2 INFO-EID (FC); Master2 INFO-EID (FC)
+G5EI; 2; M; DESS EXPLORATION INFORMATIQUE DES DONNEES; DESS EXPLORATION INF DON
+G5EI2D; 2; M; Master2 Ind Exploration Informatique Donnees et Decisionnel; Master2Ind EI2D
+
+#+END_SRC
+
 
 #+BEGIN_SRC sh
 > P0:apotraces$ grep G5PRLS output.txt
@@ -167,3 +177,9 @@ G5PLS 23
 #+END_SRC
 
 Pour achever l'anonymisation,
+
+* Adresses
+
+#+BEGIN_SRC
+http --timeout 600 -f POST http://api-adresse.data.gouv.fr/search/csv/ columns='LIB_ADRESSE1' columns='LIB_COMMUNE' postcode='CODE_POSTAL' data@path/to/file.csv
+#+END_SRC
