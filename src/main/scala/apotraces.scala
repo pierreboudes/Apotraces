@@ -1,212 +1,7 @@
-gpackage data
+package data
 
 import java.io._
 
-object Jpo { /* nouvelle donnée */
-  def strtolist(s:String): Array[String] = {
-    val res = s.split(";")
-
-
-    val estadresse = """[\s]*[\d]*[\s]*(rue|RUE|Rue|avenue|Avenue|AVENUE|place|Place|PLACE|pl|Pl|PL|impasse|Impasse|IMPASSE|route|Route|ROUTE|boulevard|Boulevard|BOULEVARD|bd|Bd|BD)*""".r
-    res
-  }
-
-  def mkadresses =  {
-    val source = scala.io.Source.fromFile("adressesbrutes.csv", "utf-8")
-    val lignes = source.getLines().toSet.toList
-    source.close()
-    lignes
-    val file = new File("adressesU_v2.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    lignes.foreach(s=>bw.write(s+"\n"))
-    bw.close()
-  }
-
-  val file = new File("adresses.txt")
-  val bw = new BufferedWriter(new FileWriter(file))
-  bw.write("hello")
-  bw.close()
-
-
-    def mketapestree {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = lignes.map(t => t(0) + "." + t(1)).toSet.toList
-    val niveaux = lignes.map(t => t(0) + "." + t(1) + "." + t(2)).toSet.toList
-    val etapes = (lignes.map(v => (v.patch(3,Vector(""),1).mkString("."), v.last))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1, t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(_ + ",")++:
-      niveaux.map(_ + ",")++:
-      etapes.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("etapestree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-  }
-
-  def mketapestreedotted {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = lignes.map(t => t(0) + "." + t(1)).toSet.toList
-    val niveaux = lignes.map(t => t(0) + "." + t(1) + "." + t(2)).toSet.toList
-    val etapes = (lignes.map(v => (v.patch(3,Vector("·"),1).mkString("."), v.last))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1 + "•" * (t._2 / 50), t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(_ + ",")++:
-      niveaux.map(_ + ",")++:
-      etapes.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("etapestree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-  }
-
-   def mkniveauxtree {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = lignes.map(t => t(0) + "." + t(1)).toSet.toList
-    val niveaux = (lignes.map(v => (v(0) + "." + v(1) + "." + v(2), v(2)))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1, t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(_ + ",")++:
-      niveaux.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("niveauxtree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-   }
-
-   def mkniveauxtreedotted {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = lignes.map(t => t(0) + "." + t(1)).toSet.toList
-    val niveaux = (lignes.map(v => (v(0) + "." + v(1) + "." + v(2) + "·", v(2)))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1 + "•" * (t._2 / 50), t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(_ + ",")++:
-      niveaux.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("niveauxtree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-   }
-
-  def mkcomposantestreedotted {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = (lignes.map(v => (v(0) + "." + v(1) + "·", v(1)))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1 + "•" * (t._2 / 200), t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("composantesdiplomestree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-  }
-
-   def mkcomposantestree {/* pour d3js */
-    val source = scala.io.Source.fromFile("etapes.csv", "utf-8")
-    val lignes = source.getLines().toList.map(
-      s => ("UP13."+ s.replaceAllLiterally(".", "")).split(";").toVector)
-    val composantes = lignes.map(_.apply(0)).toSet.toList
-    val diplomes = (lignes.map(v => (v(0) + "." + v(1), v(1)))
-      .groupBy(x=>x).mapValues(_.length).toList.filter(_._2 > 0) // filter off
-      .map(t => (t._1._1, t._2)))
-
-    val tout = (Vector("UP13,")++:
-      composantes.map(_ + ",")++:
-      diplomes.map(s => s._1 + "," + s._2)).sorted
-
-    import java.io._
-    val file = new File("composantesdiplomestree.csv")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("id,value\n")
-    tout.foreach(s => bw.write(s + "\n"))
-    bw.close
-  }
-}
-
-
-object Apo {
-  def strtotuple(s:String): (Int, String, Int, Int, Int) = {
-    /* "(83456078, \"B9DM\", 111, 2006, 2)," -> tuple */
-    val pattern = "\\(([0-9]+), \"([A-Z0-9]+)\", ([0-9]+), ([0-9]+), ([0-9]+)\\),".r
-    val pattern(id, etape, version, annee, semestre) = s
-    /* (83456078, "B9DM", 111, 2006, 2) */
-    (id.toInt, etape, version.toInt, annee.toInt, semestre.toInt)
-  }
-
-  lazy val lignes =  {
-    val source = scala.io.Source.fromFile("apotraces.txt", "utf-8")
-    val lignes = source.getLines().toList.map(strtotuple)
-    source.close()
-    lignes
-  }
-
-  lazy val etapes = lignes.map(_._2).toSet
-
-  lazy val idtraces = {
-    lignes.groupBy(_._1) /* par id */
-      .mapValues( seq => {
-       val s = seq.sortBy(/* tri par année et semestre */
-         t => (t._4, t._5)
-       )
-        val annee_debut = s(0)._4
-        /* on ne conserve que l'année de début et une étape par
-         année (la dernière étape) */
-        val trace = s.map({case t => (t._4, t._2) }).toMap.toList.sortBy(_._1).map(_._2)
-
-        (annee_debut,  trace)
-      }
-    )
-    /* on supprime les traces qui ont une année de début trop ancienne */
-      .filter({case (k, (annee_debut, trace)) => annee_debut > 2006})
-      .mapValues(_._2) // on ne conserve que la liste des étapes */
-  }
-
-  lazy val traces = idtraces.values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
-}
 
 object Etp {
   def cmpstrtotuple(s:String): (String, (String, String, Int)) = {
@@ -275,4 +70,46 @@ object Etp {
   }
 
   lazy val etapes = etplignes.toMap
+}
+
+object MainApo {
+
+//  Apo.traces.foreach(x => println(x._1.mkString("-") + " " + x._2))
+
+  val traces1 = Apo.traces.filter(_._2 > 4)
+
+  val pretraces2 = Apo.traces.filter(_._2 <= 4)
+
+  val newtraces2 = pretraces2.map( x => (x._1.map(Etp.usecmp), x._2) ).groupBy(_._1).mapValues(_.map(_._2).sum).toList.sortBy(_._2)
+  val traces2 = newtraces2.filter(_._2 > 4)
+  val pretraces3 = newtraces2.filter(_._2 <= 4)
+
+  val newtraces3 = pretraces3.map( x => (x._1.map(_.split('_')(1)), x._2)).groupBy(_._1).mapValues(_.map(_._2).sum).toList.sortBy(_._2)
+  val traces3 = newtraces3.filter(_._2 > 4)
+  val pretraces4 = newtraces3.filter(_._2 <= 4)
+
+  val traces4 = pretraces4.map( x => (x._1.map(y => "X"), x._2)).groupBy(_._1).mapValues(_.map(_._2).sum).toList.sortBy(_._2)
+
+  // affichage de  (traces1 ::: traces2 ::: traces3 ::: traces4)
+
+/*  traces1.foreach(x => println(x._1.mkString("-") + " " + x._2))
+  traces2.foreach(x => println(x._1.mkString("-") + " " + x._2))
+  traces3.foreach(x => println(x._1.mkString("-") + " " + x._2))
+ traces4.foreach(x => println(x._1.mkString("-") + " " + x._2)) */
+
+  //  écriture des traces
+  val file = new File("TRACES.txt")
+  val bw = new BufferedWriter(new FileWriter(file))
+  traces1.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces2.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces3.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  traces4.foreach(x => bw.write(x._1.mkString("-") + " " + x._2+"\n"))
+  bw.close
+
+
+  println("traces détaillées : " + traces1.map(_._2).sum)
+  println("traces ébauchées : " + traces2.map(_._2).sum)
+  println("traces réduites : " + traces3.map(_._2).sum)
+  println("traces opaques : " + traces4.map(_._2).sum)
+  println("Done!")
 }
