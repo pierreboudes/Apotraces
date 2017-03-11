@@ -3,7 +3,6 @@ package data
 import java.io._
 
 object Pub {
-
   // Lecture des données depuis le csv
   lazy val private_data =  {
     val source = scala.io.Source.fromFile("../NE_PAS_DIFFUSER/Basev1utf8_simple.csv", "utf-8")
@@ -15,13 +14,28 @@ object Pub {
     (entete, data)
   }
 
+  def projeter(xs: Vector[String],
+    donnee: (Vector[String], List[Vector[String]]) = private_data): List[Vector[String]] = {
 
-  def projeter(xs: Vector[String]) : List[Vector[String]] = {
-    import scala.util.Random
-    val (entete, src) = private_data
+    val (entete, src) = donnee
     val indices = xs.map(entete.indexOf)
 
-    xs :: Random.shuffle(src.map(x => indices.map(x.apply)))
+    src.map(x => indices.map(x.apply))
+  }
+
+  def melanger(lignes:List[Vector[String]]): List[Vector[String]] = {
+    import scala.util.Random
+
+    Random.shuffle(lignes)
+  }
+
+  def elements_rares(libel:String,
+    seuil: Int = 5,
+    donnee: (Vector[String], List[Vector[String]]) = private_data) =
+    projeter(Vector(libel), donnee).groupBy(x => x).mapValues(_.length).toList.filter(_._2 < seuil).map(_._1.apply(0)).toSet
+
+  def supprimer(offset:Int, donnee:List[Vector[String]], indesirables: Set[String]): List[Vector[String]] = {
+    donnee.filter( x => !indesirables.contains(x(offset)))
   }
 
   def ecrire(lignes:List[Vector[String]], filename: String) {
@@ -31,31 +45,33 @@ object Pub {
     lignes.foreach(x => bw.write(x.mkString(";") + "\n"))
     bw.close
   }
-
-
 }
 
 object Traces {
+  def idtraces(cols: Vector[String], d: (Vector[String], List[Vector[String]])) = {
+    val lignes = Pub.projeter(cols, d)
 
--  lazy val idtraces = {
--    lignes.groupBy("CODE_INDIVIDU") /* par id */
--      .mapValues( seq => {
--       val s = seq.sortBy(/* tri par année et semestre */
--         t => (t._4, t._5)
--       )
--        val annee_debut = s(0)._4
--        /* on ne conserve que l'année de début et une étape par
--         année (la dernière étape) */
--        val trace = s.map({case t => (t._4, t._2) }).toMap.toList.sortBy(_._1).map(_._2)
--
--        (annee_debut,  trace)
--      }
--    )
--    /* on supprime les traces qui ont une année de début trop ancienne */
--      .filter({case (k, (annee_debut, trace)) => annee_debut > 2006})
--      .mapValues(_._2) // on ne conserve que la liste des étapes */
--  }
--
--  lazy val traces = idtraces.values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
--}
+    lignes.groupBy(_.apply(0)) /* par CODE_INDIVU */
+      .mapValues( seq => {
+        val s = seq.sortBy(_.apply(1)) // par ANNEE_INSCRIPTION
+        val annee_debut = s(0)(1)
+        /* on ne conserve qu'une étape par
+         année (la dernière étape) */
+        val trace = s.map( {
+           case t => (t(1), t.drop(2))
+        } ).toMap.toList.sortBy(_._1).map(_._2)
+        trace
+      })
+  }
+ // On regroupe les traces identiques
+  def traces(cols: Vector[String], d: (Vector[String], List[Vector[String]])):  List[(List[Vector[String]], Int)] = idtraces(cols, d).values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
+
+  def ecriretraces(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
+    val jeu = traces(cols, d).map(
+      x => Vector( (if (x._2 < seuil) 1 else x._2).toString,
+        x._1.map(_.map(_.replaceAllLiterally(".","")).mkString(".")
+        ).mkString(";")))
+    val legende = Vector("NOMBRE", cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
+    Pub.ecrire(legende::jeu, filename)
+  }
 }
