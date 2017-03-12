@@ -72,7 +72,6 @@ Le nombre de lignes supprimées est de 795, partant de 213 289, il reste 212 494
 |  2014 |       22 423 |         22 274 |   149 |
 |  2015 |       22 641 |         22 413 |   228 |
 
-
 ** Suite du texte d'accompagnement
 
 Toutes les données suivantes sont produites en partant du tableau obtenu après le toilettage précédent.
@@ -131,6 +130,16 @@ En tenant compte du type de Bac, il a 25 725 traces différentes :
 En ne tenant pas compte du Bac, on obtient 16 077 traces différentes dont :
 -  24 583 étudiant·e·s laissant une trace singulière parmi 14 493 traces différentes (on compte faussement une seule personne par trace)
 - et surtout *81 164 personnes laissent une trace parmi 1 584 traces différentes*.
+
+* GTD
+** TODO Faire un .md puis un epub et un pdf du texte d'accompagnement
+** TODO Documenter le code, publier sur github ou autre plus libre
+** TODO Une cellule rare supprime tout un parcours d'un id, pas seulement la ligne
+** TODO Les items de traces (Bac + bla bla) ne contiennent pas d'information rare
+** TODO pourquoi n'y a t'il pas de double diplome double étape ici ?
+** TODO fournir plus d'explications sur le code pour les adresses pour Traces 02
+** TODO Produire un discours orienté vers le grand public éduqué sur le respect des données personnelles
+** TODO Préparer "Gardons le contact !"
 * Traces (00 OLD)
 
 Les traces sont extraites de la table =RESULTAT_VET= d'Apogée, qui
@@ -310,13 +319,3 @@ G5PLS 23
 #+END_SRC
 
 Pour achever l'anonymisation,
-
-* Adresses
-
-#+BEGIN_SRC
-http --timeout 600 -f POST http://api-adresse.data.gouv.fr/search/csv/ columns='LIB_ADRESSE1' columns='LIB_COMMUNE' postcode='CODE_POSTAL' data@path/to/file.csv
-#+END_SRC
-
-* GTD
-** TODO faire un .md puis un epub et un pdf du texte d'accompagnement
-** TODO Documenter le code publier sur github ou autre plus libre
