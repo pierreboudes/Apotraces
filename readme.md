@@ -22,6 +22,7 @@ Ce qu'il reste à faire :
   des tables de fusion (par exemple G5PRLS et G5PLS fusionnent en
   G5PLS) qui seront construites dans une interface externe.
 
+
 Pour générer la documentation en .epub (installer pandoc) :
 ```
 pandoc -t epub -S -o traces01.epub titre_epub_traces01.txt traces01.md
