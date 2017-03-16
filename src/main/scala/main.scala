@@ -65,6 +65,8 @@ object Main extends App {
 
   ecrire(Vector("ANNEE", "DONNEE_BRUTE", "DONNEE_ANONYME", "PERTE")::annees10, "up13_perte.csv")
 
+
+
   if ("Q_ETAPE" == "TODO") {
     /* Pourquoi le code etape ne détermine t'il pas le diplome, la
      composante etc ? */
@@ -93,15 +95,33 @@ object Main extends App {
 
   /* PRODUCTION DES JEUX DE DONNÉES */
 
-
-
-
-  /* Traces */
-  if ("TRACES" != "TODO") {
-    val cols_traces_avec_bac = Vector("CODE_INDIVIDU", "ANNEE_INSCRIPTION",
+  val cols_traces_avec_bac = Vector("CODE_INDIVIDU", "ANNEE_INSCRIPTION",
       "REGROUPEMENT_BAC", "LIBELLE_COURT_COMPOSANTE",
       "LIB_DIPLOME", "NIVEAU_APRES_BAC", "CODE_ETAPE")
 
+  val cols_traces = Vector("CODE_INDIVIDU", "ANNEE_INSCRIPTION",
+      "LIBELLE_COURT_COMPOSANTE",
+      "LIB_DIPLOME", "NIVEAU_APRES_BAC", "CODE_ETAPE")
+
+
+  /* Traces privées */
+  if ("NON_ANON" != "TODO") {
+    ecriretraces(cols_traces_avec_bac, (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces_bac.csv", 0)
+    ecriretraces(cols_traces_avec_bac.dropRight(1), (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces_bac_wt_etape.csv", 0)
+    ecriretraces(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces_bac_wt_diplome.csv", 0)
+    ecrirecursus(cols_traces_avec_bac, (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus_bac.csv", 0)
+    ecrirecursus(cols_traces_avec_bac.dropRight(1), (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus_bac_wt_etape.csv", 0)
+    ecrirecursus(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus_bac_wt_diplome.csv", 0)
+    ecriretraces(cols_traces, (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces.csv", 0)
+    ecriretraces(cols_traces.dropRight(1), (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces_wt_etape.csv", 0)
+    ecriretraces(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d0), "../DIFFUSION_RESTREINTE/up13_traces_wt_diplome.csv", 0)
+    ecrirecursus(cols_traces, (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus.csv", 0)
+    ecrirecursus(cols_traces.dropRight(1), (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus_wt_etape.csv", 0)
+    ecrirecursus(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d0), "../DIFFUSION_RESTREINTE/up13_cursus_wt_diplome.csv", 0)
+  }
+
+  /* Traces */
+  if ("TRACES" != "TODO") {
     val trbac = traces(cols_traces_avec_bac, (tout, d1))
 
     val cardtrbac = trbac.map(_._2)
@@ -116,10 +136,15 @@ object Main extends App {
     val legendebac = Vector("NOMBRE", cols_traces_avec_bac.drop(3).map(_.replaceAllLiterally(".","")).mkString("."))
 
     ecrire(legendebac::jeutrbac, "up13_traces_bac.csv")
+    /* TODO faire la fonction qui fait comme précedemment le bac à
+       part */
+    ecriretraces(cols_traces_avec_bac.dropRight(1), (tout, d1), "up13_traces_bac_wt_etape.csv", 10)
+    ecriretraces(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d1), "up13_traces_bac_wt_diplome.csv", 10)
 
-    val cols_traces = Vector("CODE_INDIVIDU", "ANNEE_INSCRIPTION",
-      "LIBELLE_COURT_COMPOSANTE",
-      "LIB_DIPLOME", "NIVEAU_APRES_BAC", "CODE_ETAPE")
+    /* Cursus avec le bac… on met l'année du bac en plus ? */
+    ecrirecursus(cols_traces_avec_bac, (tout, d1), "up13_cursus_bac.csv", 10)
+    ecrirecursus(cols_traces_avec_bac.dropRight(1), (tout, d1), "up13_cursus_bac_wt_etape.csv", 10)
+    ecrirecursus(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d1), "up13_cursus_bac_wt_diplome.csv", 10)
 
     val tr = traces(cols_traces, (tout, d1))
 
@@ -129,6 +154,12 @@ object Main extends App {
     println(s"${cardtr.filter(_ >= 10).sum} traces anonymes en ${cardtr.filter(_ >= 10).length} groupes")
 
     ecriretraces(cols_traces, (tout, d1), "up13_traces.csv", 10)
+    ecriretraces(cols_traces.dropRight(1), (tout, d1), "up13_traces_wt_etape.csv", 10)
+    ecriretraces(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d1), "up13_traces_wt_diplome.csv", 10)
+    ecrirecursus(cols_traces, (tout, d1), "up13_cursus.csv", 10)
+    ecrirecursus(cols_traces.dropRight(1), (tout, d1), "up13_cursus_wt_etape.csv", 10)
+    ecrirecursus(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tout, d1), "up13_cursus_wt_diplome.csv", 10)
+
   }
 
   /* Projections */
@@ -162,6 +193,18 @@ object Main extends App {
     else colonnes
   }
 
+  if( "Q_TRACES" == "TODO" ) {
+    println("Traces_bac.csv contient " + anonymiser_jeu(Vector(
+     "REGROUPEMENT_BAC",
+     "LIBELLE_COURT_COMPOSANTE",
+      "LIB_DIPLOME", "NIVEAU_APRES_BAC", "CODE_ETAPE"), "dave_nule.csv", 5) + " inscriptions singulières")
+
+    println("Traces_bac.csv contient " + anonymiser_jeu(Vector(
+     // "REGROUPEMENT_BAC",
+     "LIBELLE_COURT_COMPOSANTE",
+      "LIB_DIPLOME", "NIVEAU_APRES_BAC", "CODE_ETAPE"), "dave_nule.csv", 5) + " inscriptions singulières")
+  }
+
 //  println("Recherche d'un jeu contenant l'annee d'inscription")
 //  chercher_jeu(Vector("ANNEE_INSCRIPTION"), 5, d0.length / 20 - suppd0)
 // meilleur choix : (5361,Vector(ANNEE_INSCRIPTION,
@@ -174,6 +217,7 @@ object Main extends App {
 //  chercher_jeu(Vector("REGROUPEMENT_BAC", "NIVEAU_APRES_BAC", "CODE_COMPOSANTE"), 5, d0.length / 20 - suppd0)
 
   // Vector(REGROUPEMENT_BAC, NIVEAU_APRES_BAC, CODE_COMPOSANTE, LIBELLE_COURT_COMPOSANTE, NIVEAU_DANS_LE_DIPLOME, LIB_DIPLOME, LIBELLE_REGIME, CONTINENT)
+
 
   if ("JEUX" != "TODO") {
      val jeu0 = Vector(

@@ -48,6 +48,10 @@ object Pub {
 }
 
 object Traces {
+  /* cols : id (ou tout autre clé de regroupement), annee (ou tout
+     autre pouvant être ordonné), et des attributs divers
+     d: la donnée initiale
+   */
   def idtraces(cols: Vector[String], d: (Vector[String], List[Vector[String]])) = {
     val lignes = Pub.projeter(cols, d)
 
@@ -63,7 +67,7 @@ object Traces {
         trace
       })
   }
- // On regroupe les traces identiques
+  // On regroupe les traces identiques
   def traces(cols: Vector[String], d: (Vector[String], List[Vector[String]])):  List[(List[Vector[String]], Int)] = idtraces(cols, d).values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
 
   def ecriretraces(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
@@ -74,4 +78,47 @@ object Traces {
     val legende = Vector("NOMBRE", cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
     Pub.ecrire(legende::jeu, filename)
   }
+
+  def idcursus(cols: Vector[String], d: (Vector[String], List[Vector[String]])): Map[String, Vector[Option[Vector[String]]]] = {
+    val lignes = Pub.projeter(cols, d)
+
+    /* porteuse : toutes les années présentes */
+    val porteuse = Pub.projeter(Vector(cols(1)), d).toSet.toVector.map((x:Vector[String]) => x(0)).sorted
+
+    lignes.groupBy(_.apply(0)).mapValues( seq => {
+        val cursus = seq.map(t => (t(1), t.drop(2))).toMap
+        porteuse.map(an => cursus.get(an)) // Some(data) ou None
+      })
+  }
+
+  // On regroupe les cursus identiques
+  def cursus(cols: Vector[String], d: (Vector[String], List[Vector[String]])):  List[(Vector[Option[Vector[String]]], Int)] =
+    idcursus(cols, d).values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
+
+  /* Point d'entrée pour les cursus
+   cols : id (ou tout autre clé de regroupement), annee (ou tout
+   autre pouvant être ordonné), et des attributs divers
+   d: la donnée initiale
+   filename: ou écrire la donnée
+   seuil: le seuil d'anonymisation en français ;)
+   en dessous du seuil on ne compte qu'une seule ligne, au dessus on donne
+   le vrai décompte.
+   */
+  def ecrirecursus(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
+        /* porteuse : toutes les années présentes (recalcul…) */
+    val porteuse = Pub.projeter(Vector(cols(1)), d).toSet.toVector.map((x:Vector[String]) => x(0)).sorted
+
+    val jeu = cursus(cols, d).map(// par ligne
+      x => Vector((if (x._2 < seuil) 1 else x._2).toString + ";" +
+        x._1.map({
+          ov => ov match {
+            case None => ""
+            case Some(v) => v.map(_.replaceAllLiterally(".","")).mkString(".")
+          }
+        }).mkString(";"))
+    )
+    val legende = Vector("NOMBRE", porteuse.mkString(";"), cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
+    Pub.ecrire(legende::jeu, filename)
+  }
+
 }
