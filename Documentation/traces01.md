@@ -1,12 +1,11 @@
 
 
 
-## Traces 01 les jeux de données
+Traces 01 les jeux de données
+=============================
 
-Les jeux de données sont dans le dossier partagé // Traces 01 // Données.
-https://mindsized.org/owncloud/public.php?service=files&t=b9b1e9aba8629c76218cff2b0c73c04a
 
-### Description du jeu avant anonymisation
+## Description du jeu avant anonymisation ##
 
 L'université Paris 13 a enregistré dans son système d'information (dans Apogée), les données sur l'inscription des étudiant·e·s pour chaque année universitaire entre 2006(-2007) et 2015(-2016). Ces données portent sur les diplômes préparés, les étapes pour y parvenir,  les composantes (UFR, IUT, etc.) concernées. Plus précisément chaque donnée occupe une ligne dont les colonnes sont les suivantes.
 
@@ -32,7 +31,7 @@ L'université Paris 13 a enregistré dans son système d'information (dans Apog�
 
 D'autres données telle que l'adresse des étudiant·e·s sont en cours d'anonymisation pour une prochaine ouverture.
 
-### Toilettage du jeu de donné initial
+## Toilettage du jeu de donné initial ##
 Le jeu de données initial contient des données *singulières* au sens ou des valeurs apparaissent moins de 5 fois en tout et pour tout. Pour le dire autrement, il y a des colonnes pour lesquelles des lignes prennent des valeurs rares. On commence par trouver toutes ces lignes, puis on les supprime, et on recommence jusqu'à avoir une donnée sans valeurs rares.
 
 Le nombre initial de lignes, dans la donnée brute était de 213 289. En une première passe d'anonymisation voici le nom des colonnes et le nombre de valeurs rares (moins de 5 occurences) par colonne :
@@ -75,7 +74,7 @@ Le nombre de lignes supprimées est de 795, partant de 213 289, il reste **212 4
 
 Toutes les données suivantes sont produites en partant du tableau obtenu après toilettage.
 
-### Projection et k-anonymisation
+## Projection et k-anonymisation ##
 
 Quatre jeux de données sont produits à l'aide d'une méthode d'anonymisation par suppression des lignes trop singulières. On sélectionne un certain nombre de colonnes du tableau et on supprime les lignes qui ne sont pas répétées au moins 5 fois.  C'est un compromis entre la possibilité de croiser des données et l'exhaustivité. En effet, plus il y a de colonnes plus il faut supprimer de lignes car les lignes sont de plus en plus spécifiques.
 
@@ -93,7 +92,7 @@ Le tableau `up13_Bac.csv` concerne le type de Bac et le niveau atteint après le
 D'autres tableaux extraits de la même donnée initiale et construits selon la même méthode d'anonymisation, peuvent être fourni sur demande (préciser les colonnes souhaitées).
 
 
-### Calcul des traces
+## Calcul des traces ##
 Une trace s'obtient en suivant le parcours d'un individu dans l'Université via ses inscriptions successives et en oubliant les annnées auxquelles ont eu lieu ces inscriptions et les autres données sur l'individu (à l'exception de son type de Bac).
 
 Deux types de traces sont déduites de la donnée. Les traces débutants par le type de Bac, dans le fichier `up13_traces_bac.csv` et les traces débutant immédiatement par la première inscription à l'université, dans le fichier `up13_traces.csv`.
