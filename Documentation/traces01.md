@@ -7,7 +7,7 @@ Traces 01 les jeux de données
 
 ## Description du jeu avant anonymisation ##
 
-L'université Paris 13 a enregistré dans son système d'information (dans Apogée), les données sur l'inscription des étudiant·e·s pour chaque année universitaire entre 2006(-2007) et 2015(-2016). Ces données portent sur les diplômes préparés, les étapes pour y parvenir,  les composantes (UFR, IUT, etc.) concernées. Plus précisément chaque donnée occupe une ligne dont les colonnes sont les suivantes.
+L'université Paris 13 a enregistré dans son système d'information (logiciel Apogée), les données sur l'inscription des étudiant·e·s pour chaque année universitaire entre 2006(-2007) et 2015(-2016). Ces données portent sur les diplômes préparés, les étapes pour y parvenir, les composantes (UFR, IUT, etc.) concernées. Plus précisément chaque donnée occupe une ligne dont les colonnes sont les suivantes.
 
 | Colonne                  | Explication                                                      |
 |:--------------------------|:------------------------------------------------------------------|
@@ -32,6 +32,7 @@ L'université Paris 13 a enregistré dans son système d'information (dans Apog�
 D'autres données telle que l'adresse des étudiant·e·s sont en cours d'anonymisation pour une prochaine ouverture.
 
 ## Toilettage du jeu de donné initial ##
+
 Le jeu de données initial contient des données *singulières* au sens ou des valeurs apparaissent moins de 5 fois en tout et pour tout. Pour le dire autrement, il y a des colonnes pour lesquelles des lignes prennent des valeurs rares. On commence par trouver toutes ces lignes, puis on les supprime, et on recommence jusqu'à avoir une donnée sans valeurs rares.
 
 Le nombre initial de lignes, dans la donnée brute était de 213 289. En une première passe d'anonymisation voici le nom des colonnes et le nombre de valeurs rares (moins de 5 occurences) par colonne :
@@ -76,21 +77,22 @@ Toutes les données suivantes sont produites en partant du tableau obtenu après
 
 ## Projection et k-anonymisation ##
 
-Quatre jeux de données sont produits à l'aide d'une méthode d'anonymisation par suppression des lignes trop singulières. On sélectionne un certain nombre de colonnes du tableau et on supprime les lignes qui ne sont pas répétées au moins 5 fois.  C'est un compromis entre la possibilité de croiser des données et l'exhaustivité. En effet, plus il y a de colonnes plus il faut supprimer de lignes car les lignes sont de plus en plus spécifiques.
+Cinq jeux de données sont produits à l'aide d'une méthode d'anonymisation par suppression des lignes trop singulières. On sélectionne un certain nombre de colonnes du tableau et on supprime les lignes qui ne sont pas répétées au moins 5 fois.  C'est un compromis entre la possibilité de croiser des données et l'exhaustivité. En effet, plus il y a de colonnes plus il faut supprimer de lignes car les lignes sont de plus en plus spécifiques.
 
 Un tout premier jeu de données `up13_anonyme.csv` fait le choix de conserver toutes les colonnes sauf l'identifiant de l'individu. On perd ainsi un maximum de lignes au moment de la 5-anonymisation : 129 742 lignes doivent être supprimées (soit 61% de la donnée initiale).
 
-Pour les trois autres jeux de données on a choisi de ne pas aller au delà de 5% de pertes dans les lignes du tableau (en partant de la donnée avant toilettage initial, donc en tenant compte des 795 lignes déjà perdues). Pour cela, on a choisi une ou deux colonnes particulières et on a étendu ce nombre de colonnes, en choisissant systématiquement la colonne suivante comme occasionnant le moins de nouvelles pertes.
+Pour les quatre autres jeux de données on a choisi de ne pas aller au delà de 5% de pertes dans les lignes du tableau (en partant de la donnée avant toilettage initial, donc en tenant compte des 795 lignes déjà perdues). Pour cela, on a choisi une ou deux colonnes particulières et on a étendu ce nombre de colonnes, en choisissant systématiquement la colonne suivante comme occasionnant le moins de nouvelles pertes.
 
 Le tableau `up13_etapes.csv` concerne les étapes de diplôme, il contient les colonnes
 "CODE_ETAPE", "LIBELLE_COURT_ETAPE", "LIBELLE_LONG_ETAPE", "NIVEAU_APRES_BAC", "LIBELLE_COURT_COMPOSANTE", "LIB_DIPLOME", "LIBELLE_DISCIPLINE_DIPLOME", "CODE_SISE_DIPLOME", "NIVEAU_DANS_LE_DIPLOME" et son anonymisation occasionne une perte supplémentaire de seulement 130 lignes.
 
-Le tableau `up13_Academie.csv` concerne l'Académie du Bac et il contient les colonnes "LIBELLE_ACADEMIE_BAC", "NIVEAU_APRES_BAC", "NIVEAU_DANS_LE_DIPLOME", "CONTINENT", "LIBELLE_REGIME", "LIB_DIPLOME", "LIBELLE_COURT_COMPOSANTE" et son anoymisation implique la perte supplémentaire de 6 737 (soit une perte totale de 7532 lignes c'est à dire 3,5% de la donnée initiale).
+Le tableau `up13_Academie.csv` concerne l'Académie du Bac et il contient les colonnes "LIBELLE_ACADEMIE_BAC", "NIVEAU_APRES_BAC", "NIVEAU_DANS_LE_DIPLOME", "CONTINENT", "LIBELLE_REGIME", "LIB_DIPLOME", "LIBELLE_COURT_COMPOSANTE" et son anoymisation implique la perte supplémentaire de 6 737 (soit une perte totale de 7532 lignes c'est à dire 3,5% des données initiales).
 
-Le tableau `up13_Bac.csv` concerne le type de Bac et le niveau atteint après le Bac, il contient les colonnes "REGROUPEMENT_BAC", "NIVEAU_APRES_BAC",  "LIBELLE_REGIME", "CONTINENT",  "LIBELLE_COURT_COMPOSANTE", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME" et son anonymisation occasionne la perte supplémentaire de 3 145 lignes, donc 3 940 au total soit moins de 2% de la donnée initiale.
+Le tableau `up13_Bac.csv` concerne le type de Bac et le niveau atteint après le Bac, il contient les colonnes "REGROUPEMENT_BAC", "NIVEAU_APRES_BAC",  "LIBELLE_REGIME", "CONTINENT",  "LIBELLE_COURT_COMPOSANTE", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME" et son anonymisation occasionne la perte supplémentaire de 3 145 lignes, donc 3 940 au total soit moins de 2% des données initiales.
+
+Le tableau `up13_Bac.csv` concerne le inscriptions dans les étapdes de diplôme année après année, il contient les colonnes "ANNEE_INSCRIPTION", "LIBELLE_COURT_COMPOSANTE", "NIVEAU_APRES_BAC", "LIB_DIPLOME", "CODE_ETAPE" et son anonymisation occasionne la perte supplémentaire de 2 744 lignes, soit un total de 3 539 représentant moins de 1.66% des données initiales.
 
 D'autres tableaux extraits de la même donnée initiale et construits selon la même méthode d'anonymisation, peuvent être fourni sur demande (préciser les colonnes souhaitées).
-
 
 ## Calcul des traces ##
 Une trace s'obtient en suivant le parcours d'un individu dans l'Université via ses inscriptions successives et en oubliant les annnées auxquelles ont eu lieu ces inscriptions et les autres données sur l'individu (à l'exception de son type de Bac).
