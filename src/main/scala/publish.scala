@@ -71,12 +71,14 @@ object Traces {
   def traces(cols: Vector[String], d: (Vector[String], List[Vector[String]])):  List[(List[Vector[String]], Int)] = idtraces(cols, d).values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
 
   def ecriretraces(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
+    var log_perte = 0: Int;
     val jeu = traces(cols, d).map(
-      x => Vector( (if (x._2 < seuil) 1 else x._2).toString,
+      x => Vector( (if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString,
         x._1.map(_.map(_.replaceAllLiterally(".","")).mkString(".")
         ).mkString(";")))
     val legende = Vector("NOMBRE", cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
-    Pub.ecrire(legende::jeu, filename)
+    println(s"fichier ${filename} en création, \t perte = ${log_perte}")
+    Pub.ecrire(legende::(Pub.melanger(jeu).sortBy(_.apply(0))), filename)
   }
 
   def idcursus(cols: Vector[String], d: (Vector[String], List[Vector[String]])): Map[String, Vector[Option[Vector[String]]]] = {
@@ -105,11 +107,12 @@ object Traces {
    le vrai décompte.
    */
   def ecrirecursus(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
-        /* porteuse : toutes les années présentes (recalcul…) */
+    /* porteuse : toutes les années présentes (recalcul…) */
     val porteuse = Pub.projeter(Vector(cols(1)), d).toSet.toVector.map((x:Vector[String]) => x(0)).sorted
 
+    var log_perte = 0: Int; // compteur de perte
     val jeu = cursus(cols, d).map(// par ligne
-      x => Vector((if (x._2 < seuil) 1 else x._2).toString + ";" +
+      x => Vector((if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString + ";" +
         x._1.map({
           ov => ov match {
             case None => ""
@@ -118,7 +121,31 @@ object Traces {
         }).mkString(";"))
     )
     val legende = Vector("NOMBRE", porteuse.mkString(";"), cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
-    Pub.ecrire(legende::jeu, filename)
+    println(s"fichier ${filename} en création, \t perte = ${log_perte}")
+    Pub.ecrire(legende::(Pub.melanger(jeu).sortBy(_.apply(0))), filename)
   }
+
+}
+
+
+object Garbage {
+      def trouver_adresse(lib1: String, lib2: String, lib3: String) {
+    val estadresse = """[\s]*[\d]*[\s]*(rue|RUE|Rue|avenue|Avenue|AVENUE|place|Place|PLACE|pl|Pl|PL|impasse|Impasse|IMPASSE|route|Route|ROUTE|boulevard|Boulevard|BOULEVARD|bd|Bd|BD)*""".r
+      }
+
+    def mkadresses =  {
+    val source = scala.io.Source.fromFile("adressesbrutes.csv", "utf-8")
+    val lignes = source.getLines().toSet.toList
+    source.close()
+    val file = new File("adressesU_v2.csv")
+    val bw = new BufferedWriter(new FileWriter(file))
+    lignes.foreach(s=>bw.write(s+"\n"))
+    bw.close()
+  }
+
+  val file = new File("adresses.txt")
+  val bw = new BufferedWriter(new FileWriter(file))
+  bw.write("hello")
+  bw.close()
 
 }
