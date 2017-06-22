@@ -5,7 +5,7 @@ import java.io._
 object Pub {
   // Lecture des données depuis le csv
   lazy val private_data =  {
-    val source = scala.io.Source.fromFile("../NE_PAS_DIFFUSER/Basev1utf8_simple.csv", "utf-8")
+    val source = scala.io.Source.fromFile("../NE_PAS_DIFFUSER/Basev2utf8_simple.csv", "utf-8")
     val tete :: corps = source.getLines.toList
     source.close()
     val entete = tete.split(";").toVector
@@ -42,7 +42,7 @@ object Pub {
     import java.io._
     val file = new File("../output/" + filename)
     val bw = new BufferedWriter(new FileWriter(file))
-    lignes.foreach(x => bw.write(x.mkString(";") + "\n"))
+    lignes.foreach(x => bw.write(x.map(_.replaceAllLiterally(".","")).mkString(";") + "\n"))
     bw.close
   }
 }

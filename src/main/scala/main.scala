@@ -8,7 +8,8 @@ import java.io._
 
 object Main extends App {
   // Les sections à calculer
-  val calculer = Set("ktraces", "projections")
+  // val calculer = Set("ktraces", "projections","1traces","questions")
+  val calculer = Set("1projections")
   // constante k
   val k = 5
   // Toutes nos colonnes
@@ -56,6 +57,7 @@ object Main extends App {
     else d1
   }
 
+  /* suppression des valeurs singulières */
   val d0 = projeter(tout).map(_.map(_.replaceAllLiterally(".","")))
   println("Nombre initial de lignes : " + d0.length)
   val annees0 = projeter(Vector("ANNEE_INSCRIPTION"), (tout, d0)).groupBy( x=> x ).mapValues(_.length).toList.sortBy(_._1(0))
@@ -265,5 +267,32 @@ object Main extends App {
       "LIB_DIPLOME",  "CODE_ETAPE")
     val nb_lignes_supprimees4 = anonymiser_jeu(jeu4, "up13_annees_etapes.csv", k)
     println(s"lignes singulières supprimées du jeu :  ${nb_lignes_supprimees4 + supprimees0}" )
+  }
+
+  /* jeux de données internes */
+
+  if (calculer contains "1projections") {
+    val  jeu5 = Vector("ANNEE_INSCRIPTION", "CODE_ETAPE",
+      "CONTINENT", "REGROUPEMENT_BAC",
+      "LIBELLE_COURT_COMPOSANTE", "NIVEAU_APRES_BAC"
+      )
+    val jeu5_data = projeter(jeu5, (tout, d0)).groupBy(x => x).mapValues(_.length).toList.map(x => x._2.toString +: x._1).sortBy(x => (x(1) + x(2)))
+
+    val filename5 = "../DIFFUSION_RESTREINTE/up13_effectif_annee_etape_bac_continent.csv"
+    ecrire(("NB"+:jeu5)::(jeu5_data), filename5)
+    println(s"Fichier $filename5 créé")
+
+    val  jeu6 = Vector("ANNEE_INSCRIPTION", "CODE_ETAPE", "LIBELLE_LONG_ETAPE", "LIBELLE_COURT_COMPOSANTE")
+    val jeu6_data = projeter(jeu6, (tout, d0)).groupBy(x => x.slice(0,2)).mapValues(x =>(x.length, Vector(x.last(2),x.last(3)))).toList.map(x => x._2._1.toString +: x._1 ++: x._2._2).sortBy(x => (x(2) + " " + x(1)))
+
+    val filename6 = "../DIFFUSION_RESTREINTE/up13_effectif_annee_etape.csv"
+    ecrire(("NB"+:jeu6)::(jeu6_data), filename6)
+    println(s"Fichier $filename6 créé")
+
+    val  jeu7 = Vector("ANNEE_INSCRIPTION",
+      "LIBELLE_COURT_COMPOSANTE",
+      "CODE_ETAPE", "LIBELLE_LONG_ETAPE")
+    val nb_lignes_supprimees6 = anonymiser_jeu(jeu7, "../DIFFUSION_RESTREINTE/up13_etapes.csv", 1)
+    println(s"lignes singulières supprimées du jeu :  ${nb_lignes_supprimees6 + supprimees0}" )
   }
 }
