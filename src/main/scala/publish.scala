@@ -10,7 +10,8 @@ class Pub(tete: Vector[String], files: List[String]) {
     val source = scala.io.Source.fromFile(filename, "utf-8")
     val corps = source.getLines.toList
     source.close()
-    def parse_line(ligne:String): Vector[String]= shortname+:ligne.split('|').toVector
+    def parse_line(ligne:String): Vector[String]= shortname+:ligne.split('|').toVector.map(
+      _.replaceAllLiterally("."," ").replaceAllLiterally(";"," "))
     corps.map(parse_line)
   }
 
@@ -44,12 +45,23 @@ class Pub(tete: Vector[String], files: List[String]) {
     donnee: (Vector[String], List[Vector[String]]) = private_data) =
     projeter(Vector(libel), donnee).groupBy(x => x).mapValues(_.length).toList.filter(_._2 < seuil).map(_._1.apply(0)).toSet
 
+  /* frequences */
+  def frequences(libel: String, filename: String): Vector[String] = {
+    val liste = projeter(Vector(libel)).groupBy((x) => x).mapValues(_.length).toList.sortBy(
+      - _._2)
+    val minimum = liste.last._2
+    val moyenne: Double = liste.map(_._2).sum * 1.0 / liste.length
+     val  vliste= liste.map(p => Vector(p._1(0).toString, p._2.toString))
+    ecrire(Vector(libel, "nombre") :: vliste,  filename)
+    Vector(libel, vliste.length.toString, "%.2f".format(moyenne), minimum.toString)
+  }
+
   /* supprimer */
   def supprimer(offset:Int, donnee:List[Vector[String]], indesirables: Set[String]): List[Vector[String]] = {
     donnee.filter( x => !indesirables.contains(x(offset)))
   }
 
-  def ecrire(lignes:List[Vector[String]], filename: String, escape: Boolean = true) {
+  def ecrire(lignes:List[Vector[String]], filename: String, escape: Boolean = false) {
     import java.io._
     val file = new File(filename)
     val bw = new BufferedWriter(new FileWriter(file))
@@ -73,7 +85,7 @@ class Pub(tete: Vector[String], files: List[String]) {
      (légende: Vector[String], data: List[Vector[String]])
    */
   def cursus_individuels(cols: Vector[String], d: (Vector[String], List[Vector[String]]),
-    bac: Vector[String] = Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC", "LIBELLE_COURT_BAC")) = {
+    bac: Vector[String] = Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC", "LIBELLE_COURT_BAC")): Map[String, List[Vector[String]]] = {
     val lenbac = bac.length
     val lencols = cols.length
     val lignes = projeter(cols ++: bac, d)
@@ -91,9 +103,8 @@ class Pub(tete: Vector[String], files: List[String]) {
       val s = seq.sortBy(_.apply(1)) /* par ANNEE */
       val annee_bac = Try(s(0)(lencols).toInt).getOrElse(0)
       val insc_bac = s(0).drop(lencols + 1)
-      /* on ne conserve qu'une étape par année (la dernière étape), pour cela on toMap */
-      val cursus = (("Bac", insc_bac) +: s.map((t) => (anon_annee(t(1), annee_bac), t.drop(2).dropRight(lenbac))))
-      cursus.map(t => t._1 +: t._2)
+      val cursus = s.map((t) => (anon_annee(t(1), annee_bac), t.drop(2).dropRight(lenbac)))
+      insc_bac +: cursus.map(t => t._1 +: t._2)
     })
   }
 
@@ -104,7 +115,7 @@ class Pub(tete: Vector[String], files: List[String]) {
     var log_perte = 0: Int;
     val jeu = traces(cursus_id).map(
       x => Vector( (if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString,
-        x._1.map(_.map(_.replaceAllLiterally(".","")).mkString(".")
+        x._1.map(_.mkString(".")
         ).mkString(";")))
     val legende = Vector("NOMBRE", "INSCRIPTIONS")
     println(s"fichier ${filename} en création, \t perte = ${log_perte}")
@@ -116,9 +127,9 @@ class Pub(tete: Vector[String], files: List[String]) {
     var log_perte = 0: Int;
     val jeu = traces(cursus_individuels(cols, d)).map(
       x => Vector( (if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString,
-        x._1.map(_.map(_.replaceAllLiterally(".","")).mkString(".")
+        x._1.map(_.mkString(".")
         ).mkString(";")))
-    val legende = Vector("NOMBRE", ("AN" +: cols.drop(2)).map(_.replaceAllLiterally(".","")).mkString("."))
+    val legende = Vector("NOMBRE", ("AN" +: cols.drop(2)).mkString("."))
     println(s"fichier ${filename} en création, \t perte = ${log_perte}")
     ecrire(legende::(melanger(jeu).sortBy(-1 * _.apply(0).toInt)), filename, false)
   }
@@ -158,7 +169,7 @@ class Pub(tete: Vector[String], files: List[String]) {
         x._1.map({
           ov => ov match {
             case None => ""
-            case Some(v) => v.map(_.replaceAllLiterally(".","")).mkString(".")
+            case Some(v) => v.mkString(".")
           }
         }).mkString(";"))
     )

@@ -12,9 +12,12 @@ object Main extends App {
   // Les sections actives
   var calculer: Set[String] = Set(
     // "questions",
-    "suppr_singulières",
-    "simpletraces",
-    "ktraces",
+    //    "suppr_singulières",
+//    "frequences",
+//    "simpletraces",
+    "dictionnaire étapes",
+    "traces codes etapes",
+//    "ktraces",
     // "1traces",
     // "projections",
     //  "1projections",
@@ -44,7 +47,6 @@ object Main extends App {
   }
   /* les jeux de données */
   val datas = args.toList
-  print(datas)
   val pub = new Pub(tete, datas)
   import pub._
 
@@ -58,6 +60,13 @@ object Main extends App {
   val total_individus = projeter(Vector("CODE_ETU")).map(_(0)).toSet.size
   println(s"Nombre total d'individus ${total_individus}")
 
+  if (calculer contains "frequences") {
+    titre("fréquences")
+    val freq = for {
+      i <- Range(1,tete.length)
+    } yield frequences(tete(i), dir + "Frequences " + tete(i) + ".csv")
+    ecrire(Vector("Libellé", "nombre valeurs", "fréquence moyenne", "fréquence minimale") +: freq.toList, dir + "frequences.csv")
+  }
 
   if (calculer contains "suppr_singulières") {
     /* On supprime les lignes qui ont des valeurs trop singulières dans
@@ -144,15 +153,47 @@ object Main extends App {
       Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME"),
       (tete, d0),
       Vector("ANNEE_BAC", "REGROUPEMENT_BAC")),
-      dirpub + "up13_traces_tres_simples.csv", 5)
+      dirpub + "up13_traces_tres_simples.csv", k)
 
     ecriretraces(cursus_individuels(
       Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "LIBELLE_COURT_COMPOSANTE", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME"),
       (tete, d0),
-      Vector("ANNEE_BAC",  "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC")),
-      dirpub + "up13_traces_simples_localites.csv", 5)
+      Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC")),
+      dirpub + "up13_traces_simples_localites.csv", k)
+
+    ecriretraces(cursus_individuels(
+      Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "LIBELLE_COURT_COMPOSANTE", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME", "LIBELLE_LONG_ETAPE"),
+      (tete, d0),
+      Vector("ANNEE_BAC")),
+      dirpub + "up13_traces_simples_sans_bac.csv", k)
   }
 
+  /* dictionnaire des étapes */
+  if (calculer contains ("dictionnaire étapes")) {
+    titre("dictionnaire étapes")
+    val libetapes = Vector("ANNEE_INSCRIPTION", "CODE_ETAPE", "LIBELLE_DISCIPLINE_DIPLOME", "NIVEAU_DANS_LE_DIPLOME", "LIBELLE_COURT_ETAPE", "LIBELLE_LONG_ETAPE");
+    val etapes = projeter(libetapes).groupBy(_.apply(1)).values.map({(seq) =>
+      val annees_inscription = seq.map(_.apply(0).toInt).sorted
+      val minimum = annees_inscription.head.toString
+      val maximum = annees_inscription.last.toString
+      seq.head.drop(1) ++: Vector(minimum, maximum)}).toList;
+    ecrire((libetapes.drop(1) ++: Vector("PREMIERE ANNEE", "DERNIERE ANNEE")) +: etapes, dir + "etapes.csv");
+  }
+  /* traces des codes étapes */
+  if (calculer contains ("traces codes etapes")) {
+    titre("traces codes etapes")
+    val cursus_id_tr = cursus_individuels(
+      Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "CODE_ETAPE"),
+      (tete, d0),
+      Vector("ANNEE_BAC", "REGROUPEMENT_BAC")
+    )
+    ecriretraces(cursus_id_tr, dirpub + "up13_traces_code_etapes.csv", k)
+    ecriretraces( cursus_id_tr.mapValues(_.distinct),
+      dirpub + "up13_traces_code_etapes_sans_redoublements.csv", k)
+    /* pour calculer les parcours accessibles depuis le bac on ne regarde que les primos */
+    ecriretraces( cursus_id_tr.mapValues(_.distinct).filter(_._2.apply(1).apply(0) == "primo"),
+      dirpub + "up13_traces_code_etapes_primos_sans_redoublements.csv", k)
+  }
 
   val cols_traces_avec_bac = Vector("CODE_ETU", "ANNEE_INSCRIPTION",
       "REGROUPEMENT_BAC", "LIBELLE_COURT_COMPOSANTE",
