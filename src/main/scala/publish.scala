@@ -86,6 +86,7 @@ class Pub(tete: Vector[String], files: List[String]) {
    */
   def cursus_individuels(cols: Vector[String], d: (Vector[String], List[Vector[String]]),
     bac: Vector[String] = Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC", "LIBELLE_COURT_BAC")): Map[String, List[Vector[String]]] = {
+    /* sortie: Map(id -> List(Vector("Bac", …), Vector("primo","univ",L1", …), …), …)*/
     val lenbac = bac.length
     val lencols = cols.length
     val lignes = projeter(cols ++: bac, d)
