@@ -193,7 +193,8 @@ object Main extends App {
     /* pour calculer les parcours accessibles depuis le bac on ne regarde que les primos */
  //   ecriretraces( cursus_id_tr.mapValues(_.distinct).filter(_._2.apply(1).apply(0) == "primo")
  ecriretraces( cursus_id_tr.filter(_._2.apply(1).apply(0) == "primo").mapValues({
-      p => println(p);p.head :: p.tail.map(_.tail).distinct
+   xs => p.head :: (p.tail.map(_.tail).distinct).zipWithIndex.map(
+     p => p._1 :+ (p._2 + 1).toString)
     }),
       dirpub + "up13_traces_code_etapes_primos_sans_redoublements.csv", k)
   }
