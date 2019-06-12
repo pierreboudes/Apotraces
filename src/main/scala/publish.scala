@@ -12,7 +12,13 @@ class Pub(tete: Vector[String], files: List[String]) {
     source.close()
     def parse_line(ligne:String): Vector[String]= shortname+:ligne.split('|').toVector.map(
       _.replaceAllLiterally("."," ").replaceAllLiterally(";"," "))
-    corps.map(parse_line)
+    massage(corps.map(parse_line))
+  }
+
+  def massage(d : List[Vector[String]]): List[Vector[String]] = {
+    val i = tete.indexOf("LIB_DIPLOME")
+    val j = tete.indexOf("NIVEAU_DANS_LE_DIPLOME")
+    d.map((v) => v:+ toniveaux(v(i) + '.' + v(j)))
   }
 
   lazy val private_data: (Vector[String], List[Vector[String]]) =
@@ -84,8 +90,12 @@ class Pub(tete: Vector[String], files: List[String]) {
      d: la donnée de départ sous la forme d'une paire :
      (légende: Vector[String], data: List[Vector[String]])
    */
-  def cursus_individuels(cols: Vector[String], d: (Vector[String], List[Vector[String]]),
-    bac: Vector[String] = Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC", "LIBELLE_COURT_BAC")): Map[String, List[Vector[String]]] = {
+  def cursus_individuels(
+    cols: Vector[String],
+    d: (Vector[String], List[Vector[String]]),
+    bac: Vector[String] = Vector("ANNEE_BAC", "LIBELLE_ACADEMIE_BAC", "REGROUPEMENT_BAC", "LIBELLE_COURT_BAC"),
+    produire_temoin_annee: Boolean = true
+  ): Map[String, List[Vector[String]]] = {
     /* sortie: Map(id -> List(Vector("Bac", …), Vector("primo","univ",L1", …), …), …)*/
     val lenbac = bac.length
     val lencols = cols.length
@@ -104,13 +114,19 @@ class Pub(tete: Vector[String], files: List[String]) {
       val s = seq.sortBy(_.apply(1)) /* par ANNEE */
       val annee_bac = Try(s(0)(lencols).toInt).getOrElse(0)
       val insc_bac = s(0).drop(lencols + 1)
-      val cursus = s.map((t) => (anon_annee(t(1), annee_bac), t.drop(2).dropRight(lenbac)))
-      insc_bac +: cursus.map(t => t._1 +: t._2)
+      if (produire_temoin_annee) {
+        val cursus = s.map((t) => (anon_annee(t(1), annee_bac), t.drop(2).dropRight(lenbac)))
+        insc_bac +: cursus.map(t => t._1 +: t._2)
+      } else {
+        val cursus = s.map((t) => t.drop(2).dropRight(lenbac))
+        insc_bac +: cursus
+      }
     })
   }
 
     // On regroupe les traces identiques
   def traces(cursus_id: Map[String, List[Vector[String]]]):  List[(List[Vector[String]], Int)] = cursus_id.values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
+
 
   def ecriretraces(cursus_id: Map[String, List[Vector[String]]], filename: String, seuil: Int) = {
     var log_perte = 0: Int;
@@ -124,9 +140,9 @@ class Pub(tete: Vector[String], files: List[String]) {
   }
 
     /* écriture des traces avec effacement des cardinalités < un seuil */
-  def ecriretraces(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
+  def ecriretraces(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int, produire_temoin_annee: Boolean = true) = {
     var log_perte = 0: Int;
-    val jeu = traces(cursus_individuels(cols, d)).map(
+    val jeu = traces(cursus_individuels(cols, d, produire_temoin_annee = produire_temoin_annee)).map(
       x => Vector( (if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString,
         x._1.map(_.mkString(".")
         ).mkString(";")))
@@ -151,21 +167,39 @@ class Pub(tete: Vector[String], files: List[String]) {
   def cursus(cols: Vector[String], d: (Vector[String], List[Vector[String]])):  List[(Vector[Option[Vector[String]]], Int)] =
     idcursus(cols, d).values.toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
 
+  def filteredcursus(
+    cols: Vector[String], // colonnes à conserver
+    autrescols: Vector[String], // info supplémentaires
+    filtre: Vector[Option[Vector[String]]] => Boolean,// filtre les cursus
+    d: (Vector[String], List[Vector[String]])):  List[(Vector[Option[Vector[String]]], Int)] = {
+    val n = cols.length - 2
+    idcursus(cols ++: autrescols, d).values.filter(filtre).map(
+      (c) => c.map((o) => o.map(_.take(n)))
+    ).toList.groupBy(x => x).mapValues(_.length).toList.sortBy(_._2)
+  }
+
   /* Point d'entrée pour les cursus
    cols : id (ou tout autre clé de regroupement), annee (ou tout
    autre pouvant être ordonné), et des attributs divers
    d: la donnée initiale
    filename: ou écrire la donnée
-   seuil: le seuil d'anonymisation en français ;)
+   seuil: le seuil d'anonymisation
    en dessous du seuil on ne compte qu'une seule ligne, au dessus on donne
    le vrai décompte.
    */
-  def ecrirecursus(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int) = {
+  def filtre_true(x: Vector[Option[Vector[String]]]):Boolean = true
+
+  def ecrirecursus(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int): Unit = ecrirecursuslong(false, cols, d, filename, seuil)
+
+  def ecrirefilteredcursus(cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int, autrescols: Vector[String], filtre:  Vector[Option[Vector[String]]] => Boolean):Unit = ecrirecursuslong(true, cols, d, filename, seuil, autrescols, filtre)
+
+  def ecrirecursuslong(filtered: Boolean, cols: Vector[String], d: (Vector[String], List[Vector[String]]), filename: String, seuil: Int, autrescols: Vector[String] = Vector(), filtre:  Vector[Option[Vector[String]]] => Boolean = filtre_true): Unit = {
     /* porteuse : toutes les années présentes (recalcul…) */
     val porteuse = projeter(Vector(cols(1)), d).toSet.toVector.map((x:Vector[String]) => x(0)).sorted
 
     var log_perte = 0: Int; // compteur de perte
-    val jeu = cursus(cols, d).map(// par ligne
+    val curs = if (!filtered) cursus(cols, d) else filteredcursus(cols, autrescols, filtre, d)
+    val jeu = curs.map(// par ligne
       x => Vector((if (x._2 < seuil) {log_perte += x._2 - 1; 1} else x._2).toString + ";" +
         x._1.map({
           ov => ov match {
@@ -175,8 +209,20 @@ class Pub(tete: Vector[String], files: List[String]) {
         }).mkString(";"))
     )
     val legende = Vector("NOMBRE", porteuse.mkString(";"), cols.drop(2).map(_.replaceAllLiterally(".","")).mkString("."))
-    println(s"fichier ${filename} en création, \t perte = ${log_perte}")
-    ecrire(legende::(melanger(jeu).sortBy(_.apply(0))), filename)
+    println(s"fichier ${filename} en création, \t lignes = ${jeu.length} perte = ${log_perte}")
+    ecrire(legende::(melanger(jeu).sortBy(- _.apply(0).split(";").apply(0).toInt)), filename)
+  }
+
+
+  val diplomes2niveaux = {
+    val source = scala.io.Source.fromFile("conf/diplomes2niveaux.csv", "utf-8")
+    val corps = source.getLines.toList
+    source.close()
+    corps.map(_.split('|').toVector).map((v) => (v(0),v(1))).toMap
+  }
+
+  def toniveaux(s:String): String = {
+    diplomes2niveaux.getOrElse(s,"0")
   }
 
 }

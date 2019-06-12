@@ -5,22 +5,27 @@ import java.io._
 object Main extends App {
 
   /* ********************** Paramètres ******************* */
+  // TODO à déplacer dans un fichier de configuration
   // Les colonnes de données dans l'ordre
-  val entete = "CODE_ETU CODE_POSTAL LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_CODE_POSTAL_ETB_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME ANNEE_INSCRIPTION".split(' ').toVector
+  /*
+  val entete = "CODE_ETU CODE_POSTAL LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_CODE_POSTAL_ETB_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME CODE_PAYS_NATIONALITE LIBELLE_NATIONALITE CONTINENT ANNEE_INSCRIPTION NIVEAU".split(' ').toVector
+   */
 
+  val entete = "CODE_ETU LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME ANNEE_INSCRIPTION NIVEAU".split(' ').toVector
 
   // Les sections actives
   var calculer: Set[String] = Set(
-    // "questions",
-    //    "suppr_singulières",
-//    "frequences",
-//    "simpletraces",
+    "questions",
+    "suppr_singulières",
+    "frequences",
+    "simpletraces",
     "dictionnaire étapes",
     "traces codes etapes",
-//    "ktraces",
-    // "1traces",
-    // "projections",
-    //  "1projections",
+    "ktraces",
+    "1traces",
+    "cohortes pour suivi local",
+    "projections",
+    "1projections",
   )
   // constante k
   val k = 5
@@ -86,6 +91,7 @@ object Main extends App {
         val ens = elements_rares(x, k, (tete, d1))
         (x, ens.count(x=>true), ens)
       }).filter(_._2 > 0)
+
       rares.foreach(t => println((t._1, t._2)))
 
       if (rares.length > 0) {
@@ -121,8 +127,7 @@ object Main extends App {
   /* Section questionner les données 1 */
   if (calculer contains ("questions")) {
     titre("questions")
-    /* Pourquoi le code etape ne détermine t'il pas le diplome, la
-     composante etc ? */
+    println("Pourquoi le code etape ne détermine t'il pas le diplome, la composante etc ?")
 
     val etape = Vector(
       "CODE_ETAPE",
@@ -150,7 +155,7 @@ object Main extends App {
   if (calculer contains "simpletraces") {
     titre("simpletraces")
     ecriretraces(cursus_individuels(
-      Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME"),
+      Vector("CODE_ETU", "ANNEE_INSCRIPTION", "UNIV", "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME", "REUSSITE"),
       (tete, d0),
       Vector("ANNEE_BAC", "REGROUPEMENT_BAC")),
       dirpub + "up13_traces_tres_simples.csv", k)
@@ -193,7 +198,7 @@ object Main extends App {
     /* pour calculer les parcours accessibles depuis le bac on ne regarde que les primos */
  //   ecriretraces( cursus_id_tr.mapValues(_.distinct).filter(_._2.apply(1).apply(0) == "primo")
  ecriretraces( cursus_id_tr.filter(_._2.apply(1).apply(0) == "primo").mapValues({
-      p => println(p);p.head :: p.tail.map(_.tail).distinct
+      p => p.head :: p.tail.map(_.tail).distinct
     }),
       dirpub + "up13_traces_code_etapes_primos_sans_redoublements.csv", k)
   }
@@ -214,23 +219,266 @@ object Main extends App {
       "REGROUPEMENT_BAC", "LIBELLE_COURT_COMPOSANTE",
       "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME")
 
+  val cols_traces_naissance = Vector("CODE_ETU", "ANNEE_INSCRIPTION", "ANNEE_NAISSANCE",
+    "LIBELLE_COURT_COMPOSANTE", // "NIVEAU",
+      "LIB_DIPLOME", "NIVEAU_DANS_LE_DIPLOME", "CODE_ETAPE", "LIBELLE_COURT_ETAPE")
+
+  val cols_traces_naissance_light = Vector("CODE_ETU", "ANNEE_INSCRIPTION", "ANNEE_NAISSANCE")
+
+  val cols_traces_etapes = Vector("CODE_ETU", "ANNEE_INSCRIPTION", "NIVEAU", "CODE_ETAPE")
 
   /* Section calcul des traces exactes (1-traces) pour diffusion restreinte  */
-  if (calculer contains ("1traces")) {
-    titre("1traces")
-    ecriretraces(cols_traces_avec_bac, (tete, d0), dir + "up13_traces_bac.csv", 0)
-    println("DONE")
-    ecriretraces(cols_traces_avec_bac_sans_etapes, (tete, d0), dir + "up13_traces_bac_sans_etape.csv", 0)
-    ecriretraces(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_traces_bac_wt_diplome.csv", 0)
-    ecrirecursus(cols_traces_avec_bac, (tete, d0), dir + "up13_cursus_bac.csv", 0)
-    ecrirecursus(cols_traces_avec_bac.dropRight(1), (tete, d0), dir + "up13_cursus_bac_sans_etape.csv", 0)
-    ecrirecursus(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_cursus_bac_wt_diplome.csv", 0)
-    ecriretraces(cols_traces, (tete, d0), dir + "up13_traces.csv", 0)
-    ecriretraces(cols_traces.dropRight(1), (tete, d0), dir + "up13_traces_sans_etape.csv", 0)
-    ecriretraces(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_traces_wt_diplome.csv", 0)
-    ecrirecursus(cols_traces, (tete, d0), dir + "up13_cursus.csv", 0)
-    ecrirecursus(cols_traces_avec_bac_sans_etapes, (tete, d0), dir + "up13_cursus_sans_etape.csv", 0)
-    ecrirecursus(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_cursus_sans_diplome.csv", 0)
+   if (calculer contains ("1traces")) {
+     titre("1traces")
+     // TODO Pourquoi je me retrouve avec l'académie du Bac et le type du bac avec ces traces ?
+
+     ecriretraces(cols_traces_naissance_light, (tete, d0), dir + "up13_traces_naissance_light.csv", 0)
+     ecriretraces(cols_traces_naissance, (tete, d0), dir + "up13_traces_naissance.csv", 0)
+     ecriretraces(cols_traces_avec_bac, (tete, d0), dir + "up13_traces_bac.csv", 0)
+     ecriretraces(cols_traces_avec_bac_sans_etapes, (tete, d0), dir + "up13_traces_bac_sans_etape.csv", 0)
+     ecriretraces(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_traces_bac_wt_diplome.csv", 0)
+     ecrirecursus(cols_traces_avec_bac, (tete, d0), dir + "up13_cursus_bac.csv", 0)
+     ecrirecursus(cols_traces_avec_bac.dropRight(1), (tete, d0), dir + "up13_cursus_bac_sans_etape.csv", 0)
+     ecrirecursus(cols_traces_avec_bac.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_cursus_bac_wt_diplome.csv", 0)
+     ecriretraces(cols_traces, (tete, d0), dir + "up13_traces.csv", 0)
+     ecriretraces(cols_traces_etapes, (tete, d0), dir + "up13_traces_etapes.csv", 0, false)
+     ecriretraces(cols_traces.dropRight(1), (tete, d0), dir + "up13_traces_sans_etape.csv", 0)
+     ecriretraces(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_traces_wt_diplome.csv", 0)
+     ecrirecursus(cols_traces, (tete, d0), dir + "up13_cursus.csv", 0)
+     ecrirecursus(cols_traces_avec_bac_sans_etapes, (tete, d0), dir + "up13_cursus_sans_etape.csv", 0)
+     ecrirecursus(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d0), dir + "up13_cursus_sans_diplome.csv", 0)
+
+   }
+
+     if (calculer contains ("cohortes pour suivi local")) {
+     titre("cohortes pour suivi local")
+
+//     val colsmin =  Vector("CODE_ETU", "ANNEE_INSCRIPTION", "NIVEAU", "REUSSITE")
+     val colsmin =  Vector("CODE_ETU", "ANNEE_INSCRIPTION")
+
+    ecrirecursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples.csv",
+      0
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-Licence.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last == "Licence" )) }
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-LicPro.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last == "Lic Pro" )) }
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-DUT.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last == "DUT" )) }
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-Master.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("Master") )) }
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-LicenceMaster.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("Master") || d.last.startsWith("Licence") )) }
+    )
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-Doctorat.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("Doctorat") )) }
+     )
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-Ingénieur.csv",
+      0,
+      Vector("LIB_DIPLOME"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("Ing") )) }
+     )
+
+     /*
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-europe.csv",
+      0,
+      Vector("CONTINENT"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("EUROPE") )) }
+    )
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-hors-europe.csv",
+      0,
+      Vector("CONTINENT"),
+      { (c) => c.exists(_.exists( (d) => !d.last.startsWith("EUROPE") )) }
+    )
+      */
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-naissance-1991.csv",
+      0,
+      Vector("ANNEE_NAISSANCE"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("1991") )) }
+    )
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-naissance-1996.csv",
+      0,
+      Vector("ANNEE_NAISSANCE"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("1996") )) }
+    )
+
+
+    ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-bac.csv",
+      0,
+      Vector("REGROUPEMENT_BAC"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("Bacs") )) }
+    )
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-sans-bac.csv",
+      0,
+      Vector("REGROUPEMENT_BAC"),
+      { (c) => c.exists(_.exists( (d) => !d.last.startsWith("Bacs") )) }
+    )
+
+
+     Vector("UFR SMBH", "UFR LLSHS", "UFR DSPS", "IG", "IUTSD", "UFR SEG", "IUTV", "IUTB", "UFR COM").foreach( (comp) => {
+       ecrirecursus(
+         colsmin,
+         (tete, d0.filter(_.apply(tete.indexOf("LIBELLE_COURT_COMPOSANTE")) == comp ) ),
+         dir + s"up13_cohortes_hyper_simples-${comp}.csv",
+         0
+       )
+
+       ecrirefilteredcursus(
+         colsmin,
+         (tete, d0),
+         dir + s"up13_cohortes_hyper_simples-passage-par-${comp}.csv",
+         0,
+         Vector("LIBELLE_COURT_COMPOSANTE"),
+         { (c) => c.exists(_.exists( (d) => d.last == comp )) }
+       )
+
+       ecrirefilteredcursus(
+         colsmin,
+         (tete, d0),
+         dir + s"up13_cohortes_hyper_simples-${comp}-uniquement.csv",
+         0,
+         Vector("LIBELLE_COURT_COMPOSANTE"),
+         { (c) => c.forall(_.forall( (d) => d.last == comp )) }
+       )
+     })
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-2013.csv",
+      0,
+      Vector("ANNEE_INSCRIPTION"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("2013") )) }
+    )
+
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-Bac-2010.csv",
+      0,
+      Vector("ANNEE_BAC"),
+      { (c) => c.exists(_.exists( (d) => d.last.startsWith("2010") )) }
+    )
+
+     val ensEtapesAnnees = Set(
+       ("2009", "G1INF"),
+       ("2009", "G1MAT"),
+       ("2009", "G1MIE"),
+       ("2009", "G1PC"),
+       ("2009", "G1TRC"),
+       ("2009", "G1TRC9"),
+       ("2009", "E2MIE"),
+       ("2009", "G2INF"),
+       ("2009", "G2PC"),
+       ("2009", "G2SPI"),
+       ("2009", "G5PLS"),
+       ("2009", "G2CP"),
+       ("2010", "G3SI2"),
+       ("2010", "G1INF"),
+       ("2010", "G1MAT"),
+       ("2010", "G1MIE"),
+       ("2010", "G1PC"),
+       ("2010", "G1TRC"),
+       ("2010", "G1TRC9"),
+       ("2010", "E2MIE"),
+       ("2010", "G2INF"),
+       ("2010", "G2PC"),
+       ("2010", "G2SPI"),
+       ("2010", "G5PLS"),
+       ("2011", "G3SI2"),
+       ("2011", "G1INF"),
+       ("2011", "G1MAT"),
+       ("2011", "G1MIE"),
+       ("2011", "G1PC"),
+       ("2011", "G1TRC"),
+       ("2011", "G1TRC9"),
+       ("2011", "E2MIE"),
+       ("2011", "G2INF"),
+       ("2011", "G2PC"),
+       ("2011", "G2SPI"),
+       ("2011", "G5PLS")
+     )
+     ecrirefilteredcursus(
+      colsmin,
+      (tete, d0),
+      dir + "up13_cohortes_hyper_simples-enseignant.csv",
+      0,
+       Vector("ANNEE_INSCRIPTION", "CODE_ETAPE"),
+       { (c) => c.exists(_.exists( (d) => {
+         val an = d(d.length - 2)
+         val etape = d(d.length - 1)
+         ensEtapesAnnees contains ((an, etape))
+       } )) }
+    )
+
   }
 
   /* Section calcul des traces anonymisées (k-traces)  */
@@ -274,6 +522,7 @@ object Main extends App {
     ecrirecursus(cols_traces_avec_bac_sans_etapes, (tete, d1), dirpub + "up13_cursus_wt_etape.csv", 10)
     ecrirecursus(cols_traces.filter(x => ((x != "LIB_DIPLOME") && (x != "CODE_ETAPE"))), (tete, d1), dirpub + "up13_cursus_wt_diplome.csv", 10)
   }
+
 
   def anonymiser_jeu(colonnes: Vector[String], filename: String, k: Int) = {
     val jeu = projeter(colonnes, (tete, d1))
