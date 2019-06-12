@@ -11,11 +11,13 @@ object Main extends App {
   val entete = "CODE_ETU CODE_POSTAL LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_CODE_POSTAL_ETB_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME CODE_PAYS_NATIONALITE LIBELLE_NATIONALITE CONTINENT ANNEE_INSCRIPTION NIVEAU".split(' ').toVector
    */
 
-  val entete = "CODE_ETU LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME ANNEE_INSCRIPTION NIVEAU".split(' ').toVector
+  /* Les colonnes des données sources */
+  val entete = "CODE_ETU LIB_DIPLOME NIVEAU_DANS_LE_DIPLOME LIBELLE_DISCIPLINE_DIPLOME CODE_SISE_DIPLOME CODE_CYCLE CODE_ETAPE LIBELLE_COURT_ETAPE LIBELLE_LONG_ETAPE LIBELLE_COURT_COMPOSANTE LIBELLE_ACADEMIE_BAC ANNEE_BAC LIBELLE_COURT_BAC REGROUPEMENT_BAC ANNEE_NAISSANCE LIBELLE_REGIME CODE_REGIME ANNEE_INSCRIPTION REUSSITE".split(' ').toVector
+
 
   // Les sections actives
   var calculer: Set[String] = Set(
-    "questions",
+//    "questions",
     "suppr_singulières",
     "frequences",
     "simpletraces",
@@ -39,7 +41,9 @@ object Main extends App {
   // affichage des sections
   def titre(s: String) = println("# Section : " + s)
 
-  val tete = "UNIV" +: entete
+  /* On ajoute les colonnes calculées à l'entete : l'université (le nom du fichier de données) et le niveau "bac + niveau" (bac + 1, bac + 2, etc.) calculé à partir du niveau dans le diplôme et du fichier de configuration conf/diplomes2niveaux.csv */
+
+  val tete = "UNIV" +: entete :+ "NIVEAU"
 
   /* ****** on travaille sur le système de fichiers local ******* */
   val fsdirpub = new File(dirpub);
@@ -253,8 +257,7 @@ object Main extends App {
      if (calculer contains ("cohortes pour suivi local")) {
      titre("cohortes pour suivi local")
 
-//     val colsmin =  Vector("CODE_ETU", "ANNEE_INSCRIPTION", "NIVEAU", "REUSSITE")
-     val colsmin =  Vector("CODE_ETU", "ANNEE_INSCRIPTION")
+    val colsmin =  Vector("CODE_ETU", "ANNEE_INSCRIPTION", "NIVEAU", "REUSSITE")
 
     ecrirecursus(
       colsmin,
