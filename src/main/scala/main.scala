@@ -32,9 +32,9 @@ object Main extends App {
   // constante k
   val k = 5
   // Repertoire d'écriture des jeux de données publics */
-  val dirpub = "../output2018/"
+  val dirpub = "../open_data_2018-2019/"
   // Repertoire d'écriture des jeux de données internes */
-  val dir = "../output2018/DIFFUSION_RESTREINTE/"
+  val dir = "../private_data_2018-2019/"
 
   /* ********************Fin paramètres ******************* */
 
